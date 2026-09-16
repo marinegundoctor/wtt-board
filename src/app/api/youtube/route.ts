@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY?.trim();
 const WTT_CHANNEL_ID = 'UC9ckyA_A3MfXUa0ttxMoIZw'; // WTT Global Channel ID
 
 export async function GET(request: Request) {
