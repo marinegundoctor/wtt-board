@@ -1,13 +1,54 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { Bell, Search, PlayCircle, Trophy, Calendar, Filter, ChevronRight, Activity } from "lucide-react";
+import axios from "axios";
 
 export default function Dashboard() {
-  // Mock Data
-  const liveScores = [
+  const [liveScores, setLiveScores] = useState<any[]>([
     { id: 1, p1: "Lin Shidong", p2: "Tomokazu Harimoto", s1: 2, s2: 1, current: "11-9, 8-11, 11-5, 4-2", status: "Live" },
     { id: 2, p1: "Felix Lebrun", p2: "Hugo Calderano", s1: 0, s2: 0, current: "5-7", status: "Live" },
     { id: 3, p1: "Wang Chuqin", p2: "Dang Qiu", s1: 3, s2: 0, current: "11-4, 11-8, 11-6", status: "Finished" },
-  ];
+  ]);
+
+  const [matchSchedule, setMatchSchedule] = useState<any[]>([
+    { time: "10:00", table: "Table 1", players: "S. Yingsha vs M. Ito", category: "WS - R16" },
+    { time: "10:45", table: "Table 2", players: "M. Long vs L. Yun-Ju", category: "MS - R16" },
+    { time: "11:30", table: "Table 1", players: "Chen/Wang vs Shin/Jeon", category: "WD - QF" },
+  ]);
+
+  const [youtubeVideo, setYoutubeVideo] = useState<any>(null);
+
+  // Fetch Live Data
+  useEffect(() => {
+    // 1. Fetch YouTube Live/Upcoming
+    axios.get('/api/youtube?eventType=live')
+      .then(res => {
+        if (res.data.items && res.data.items.length > 0) {
+          setYoutubeVideo(res.data.items[0]);
+        }
+      })
+      .catch(err => console.log("YouTube API not configured or failed, using placeholder."));
+
+    // 2. Fetch Sofascore Matches
+    axios.get('/api/sofascore')
+      .then(res => {
+        if (res.data.events && res.data.events.length > 0) {
+          // Map Sofascore events to our ticker/schedule format
+          const mappedScores = res.data.events.slice(0, 5).map((ev: any) => ({
+            id: ev.id,
+            p1: ev.homeTeam?.name || "TBD",
+            p2: ev.awayTeam?.name || "TBD",
+            s1: ev.homeScore?.display || 0,
+            s2: ev.awayScore?.display || 0,
+            current: ev.status?.description,
+            status: ev.status?.type === 'inprogress' ? 'Live' : 'Finished'
+          }));
+          setLiveScores(mappedScores);
+        }
+      })
+      .catch(err => console.log("Sofascore API blocked or failed, using mock data for demo."));
+  }, []);
 
   const dailyResults = [
     { match: "Men's Singles QF", result: "F. Lebrun def. T. Moregard (3-1)" },
@@ -19,12 +60,6 @@ export default function Dashboard() {
     { time: "18:00 (Local)", event: "Men's Singles Semi-Finals" },
     { time: "19:30 (Local)", event: "Women's Singles Semi-Finals" },
     { time: "21:00 (Local)", event: "Mixed Doubles Final" },
-  ];
-
-  const matchSchedule = [
-    { time: "10:00", table: "Table 1", players: "S. Yingsha vs M. Ito", category: "WS - R16" },
-    { time: "10:45", table: "Table 2", players: "M. Long vs L. Yun-Ju", category: "MS - R16" },
-    { time: "11:30", table: "Table 1", players: "Chen/Wang vs Shin/Jeon", category: "WD - QF" },
   ];
 
   return (
@@ -80,21 +115,36 @@ export default function Dashboard() {
           {/* YouTube Embed */}
           <section className="bg-white rounded-xl shadow-sm overflow-hidden border border-neutral-200">
             <div className="bg-neutral-900 aspect-video relative flex items-center justify-center">
-              {/* Replace with actual iframe in production */}
-              <div className="text-center text-white p-6">
-                <PlayCircle className="h-16 w-16 mx-auto mb-4 text-red-600 opacity-80" />
-                <h3 className="text-xl font-bold">WTT Feeder Bangkok 2026 - Table 1 LIVE</h3>
-                <p className="text-neutral-400 mt-2">Stream will begin shortly...</p>
-              </div>
+              {youtubeVideo ? (
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={`https://www.youtube.com/embed/${youtubeVideo.id?.videoId}`}
+                  title={youtubeVideo.snippet?.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <div className="text-center text-white p-6">
+                  <PlayCircle className="h-16 w-16 mx-auto mb-4 text-red-600 opacity-80" />
+                  <h3 className="text-xl font-bold">WTT Feeder Bangkok 2026 - Table 1 LIVE</h3>
+                  <p className="text-neutral-400 mt-2">Stream will begin shortly (or configure YouTube API Key).</p>
+                </div>
+              )}
             </div>
             <div className="p-4 flex items-center justify-between">
               <div>
-                <h2 className="font-bold text-lg">Table 1 - Session 1</h2>
+                <h2 className="font-bold text-lg">{youtubeVideo ? youtubeVideo.snippet?.title : "Table 1 - Session 1"}</h2>
                 <p className="text-sm text-neutral-500">Live coverage of Men's & Women's Singles Quarterfinals</p>
               </div>
-              <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors">
+              <a 
+                href={youtubeVideo ? `https://youtube.com/watch?v=${youtubeVideo.id?.videoId}` : "#"}
+                target="_blank" rel="noopener noreferrer"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors block"
+              >
                 Watch on YouTube
-              </button>
+              </a>
             </div>
           </section>
 
