@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 
-const BETSAPI_TOKEN = process.env.BETSAPI_TOKEN || '266810-BQFB4baKwmhYPU';
+const BETSAPI_TOKEN = process.env.BETSAPI_TOKEN || '';
 
 export async function GET(request: Request) {
   try {
