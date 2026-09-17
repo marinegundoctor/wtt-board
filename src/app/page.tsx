@@ -35,7 +35,7 @@ export default function Dashboard() {
       .catch(() => console.log("YouTube API using placeholder"));
 
     // 2. Fetch Polymarket Table Tennis Markets
-    axios.get('https://gamma-api.polymarket.com/events?closed=false&tag_slug=table-tennis')
+    axios.get('/api/polymarket')
       .then(res => {
         const events = res.data || [];
         setPolymarketEvents(events);
@@ -80,6 +80,11 @@ export default function Dashboard() {
     e.preventDefault();
     if (!customStreamUrl) return;
 
+    if (customStreamUrl.includes(' vs ') && !customStreamUrl.startsWith('http')) {
+      alert("This is just the match name. Please paste a valid stream URL (YouTube / M3U8) to play.");
+      return;
+    }
+
     // Detect YouTube URL to extract videoId if needed
     let videoId = customStreamUrl;
     if (customStreamUrl.includes('v=')) {
@@ -92,6 +97,23 @@ export default function Dashboard() {
       id: { videoId },
       snippet: { title: "Custom Stream Source" }
     });
+  };
+
+  const handleMatchClick = (score: any) => {
+    // Attempt to match names
+    const p1LastName = score.p1.split(' ').pop()?.toLowerCase() || "";
+    const p2LastName = score.p2.split(' ').pop()?.toLowerCase() || "";
+    const p1Full = score.p1.toLowerCase();
+    const p2Full = score.p2.toLowerCase();
+    
+    const matchedStream = youtubeStreams.find(s => {
+      const title = (s.snippet?.title || "").toLowerCase();
+      return title.includes(p1LastName) || title.includes(p2LastName) || title.includes(p1Full) || title.includes(p2Full);
+    });
+    
+    if (matchedStream) {
+      setSelectedVideo(matchedStream);
+    }
   };
 
   const handleSyncLive = () => {
@@ -138,51 +160,65 @@ export default function Dashboard() {
 
       {/* BetsAPI Live Score Ticker */}
       <div className="bg-slate-900/90 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center overflow-x-auto no-scrollbar space-x-6">
-          <div className="flex items-center space-x-2 text-emerald-400 font-mono font-bold shrink-0 text-xs">
+        <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-stretch space-x-2 h-20">
+          <div className="flex items-center space-x-2 text-emerald-400 font-mono font-bold shrink-0 text-xs pr-4">
             <Activity className="h-4 w-4 animate-pulse" />
             <span>LIVE MATCHES ({liveScores.length})</span>
           </div>
-          <div className="text-slate-600 font-bold">&lt;</div>
-          {liveScores.length === 0 && (
-            <span className="text-xs text-slate-500 italic">No in-play table tennis matches at this second...</span>
-          )}
-          {liveScores.filter(score => {
-             if (globalFilter === "All") return true;
-             if (globalFilter === "WTT") return score.league.toLowerCase().includes("wtt");
-             if (globalFilter === "Setka") return !score.league.toLowerCase().includes("wtt");
-             return true;
-          }).map((score) => (
-            <div 
-              key={score.id} 
-              onClick={() => setCustomStreamUrl(`${score.p1} vs ${score.p2}`)}
-              className="flex flex-col shrink-0 text-xs bg-slate-800/60 hover:bg-slate-700/80 cursor-pointer transition-colors border border-slate-700/60 px-3 py-1.5 rounded-md"
-              title="Click to load names into stream player input"
-            >
-              <div className="flex justify-between items-center mb-1">
-                <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded-sm ${score.league.toLowerCase().includes('wtt') ? 'bg-red-950 text-red-400 border border-red-800/50' : 'bg-blue-950 text-blue-400 border border-blue-800/50'}`}>
-                  {score.league.toLowerCase().includes('wtt') ? 'WTT' : 'SETKA'}
-                </span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="flex flex-col max-w-[130px]">
-                  <span className="font-semibold text-white truncate">{score.p1}</span>
-                  <span className="text-slate-400 truncate">{score.p2}</span>
-                </div>
-                <div className="flex flex-col items-center justify-center font-mono font-bold text-sm px-2 text-emerald-400">
-                  <span>{score.s1}</span>
-                  <span>{score.s2}</span>
-                </div>
-                <div className="flex flex-col font-mono text-[11px] text-slate-400 min-w-[70px]">
-                  <span className={score.status === "Live" ? "text-emerald-400 font-bold" : "text-slate-500"}>
-                    {score.status}
+
+          <button onClick={() => document.getElementById('ticker-scroll')?.scrollBy({left: -300, behavior: 'smooth'})} className="flex items-center justify-center px-1 text-slate-500 hover:text-slate-300 hover:bg-slate-800 rounded font-black text-xl shrink-0 transition-colors">
+            &lt;
+          </button>
+
+          <div id="ticker-scroll" className="flex items-center overflow-x-auto no-scrollbar space-x-4 flex-1 scroll-smooth">
+            {liveScores.length === 0 && (
+              <span className="text-xs text-slate-500 italic px-4">No in-play table tennis matches at this second...</span>
+            )}
+            {liveScores.filter(score => {
+               if (globalFilter === "All") return true;
+               if (globalFilter === "WTT") return score.league.toLowerCase().includes("wtt");
+               if (globalFilter === "Setka") return !score.league.toLowerCase().includes("wtt");
+               return true;
+            }).map((score) => (
+              <div 
+                key={score.id} 
+                onClick={() => {
+                  setCustomStreamUrl(`${score.p1} vs ${score.p2}`);
+                  handleMatchClick(score);
+                }}
+                className="flex flex-col shrink-0 text-xs bg-slate-800/60 hover:bg-slate-700/80 cursor-pointer transition-colors border border-slate-700/60 px-3 py-1.5 rounded-md h-full justify-center"
+                title="Click to auto-load stream or populate URL box"
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded-sm ${score.league.toLowerCase().includes('wtt') ? 'bg-red-950 text-red-400 border border-red-800/50' : 'bg-blue-950 text-blue-400 border border-blue-800/50'}`}>
+                    {score.league.toLowerCase().includes('wtt') ? 'WTT' : 'SETKA'}
                   </span>
-                  <span className="text-[10px] text-slate-500">{score.current}</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="flex flex-col max-w-[130px]">
+                    <span className="font-semibold text-white truncate">{score.p1}</span>
+                    <span className="text-slate-400 truncate">{score.p2}</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center font-mono font-bold text-sm px-2 text-emerald-400">
+                    <span>{score.s1}</span>
+                    <span>{score.s2}</span>
+                  </div>
+                  <div className="flex flex-col font-mono text-[11px] text-slate-400 min-w-[70px]">
+                    <span className={score.status === "Live" ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                      {score.status}
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      {score.current?.includes('-') ? score.current : ''}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          <div className="text-slate-600 font-bold">&gt;</div>
+            ))}
+          </div>
+
+          <button onClick={() => document.getElementById('ticker-scroll')?.scrollBy({left: 300, behavior: 'smooth'})} className="flex items-center justify-center px-1 text-slate-500 hover:text-slate-300 hover:bg-slate-800 rounded font-black text-xl shrink-0 transition-colors">
+            &gt;
+          </button>
         </div>
       </div>
 
@@ -220,7 +256,7 @@ export default function Dashboard() {
               {youtubeStreams.length > 0 && (
                 <div>
                   <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1.5 flex items-center">
-                    <Tv className="h-3.5 w-3.5 mr-1 text-emerald-400" /> Live Tables Available:
+                    <Tv className="h-3.5 w-3.5 mr-1 text-emerald-400" /> Live Tables Available {globalFilter === "WTT" ? "in WTT" : globalFilter === "Setka" ? "in Setka" : ""}:
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {youtubeStreams.filter(stream => {
@@ -255,14 +291,14 @@ export default function Dashboard() {
                   type="text"
                   value={customStreamUrl}
                   onChange={(e) => setCustomStreamUrl(e.target.value)}
-                  placeholder="Setka Cup / Custom stream URL or YouTube ID..."
-                  className="text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg w-full text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  placeholder="Load a custom game stream URL (YouTube ID / M3U8)..."
+                  className="text-xs px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg w-full text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                 />
                 <button
                   type="submit"
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg shrink-0 border border-slate-700 transition-colors"
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-3 py-2 rounded-lg shrink-0 border border-slate-700 transition-colors"
                 >
-                  Load Stream
+                  Load URL
                 </button>
                 <button
                   type="button"
