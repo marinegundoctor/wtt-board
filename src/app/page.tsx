@@ -104,8 +104,9 @@ export default function Dashboard() {
     const processName = (name: string) => {
       const parts = name.split(' ').map(p => p.trim()).filter(p => p.length > 0);
       if (parts.length >= 2) {
-        const last = parts[0].toLowerCase().replace(/[^a-z]/g, '').substring(0, 3);
-        const first = parts[1].toLowerCase().replace(/[^a-z]/g, '').substring(0, 3);
+        // Polymarket slug uses first 3 letters of LAST name, then first 3 of FIRST name.
+        const last = parts[parts.length - 1].toLowerCase().replace(/[^a-z]/g, '').substring(0, 3);
+        const first = parts[0].toLowerCase().replace(/[^a-z]/g, '').substring(0, 3);
         return `${last}${first}`;
       }
       return name.toLowerCase().replace(/[^a-z]/g, '').substring(0, 6);
