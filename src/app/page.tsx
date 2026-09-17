@@ -93,7 +93,10 @@ export default function Dashboard() {
   useEffect(() => {
     fetchBets();
     fetchUpcoming();
-    const interval = setInterval(fetchBets, 15000);
+    const interval = setInterval(() => {
+      fetchBets();
+      fetchUpcoming();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -138,7 +141,7 @@ export default function Dashboard() {
     const p2code = processName(score.p2);
     const d = new Date();
     const dateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-    return `https://polymarket.us/sports/setka-cup-ukraine-men/setkameua-${p1code}-${p2code}-${dateStr}`;
+    return `/api/poly-redirect?p1=${p1code}&p2=${p2code}&date=${dateStr}`;
   };
 
   const handleMatchClick = (score: any) => {
