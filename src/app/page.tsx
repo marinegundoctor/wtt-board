@@ -83,7 +83,8 @@ export default function Dashboard() {
               s2: setScores[1] || '0',
               sets: scoresObj,
               current: lastSet ? `Pts: ${lastSet.home ?? 0}-${lastSet.away ?? 0}` : (ev.league?.name || ''),
-              status: ev.time_status === "1" ? 'Live' : (ev.time_status === "3" ? 'Finished' : 'Upcoming')
+              status: ev.time_status === "1" ? 'Live' : (ev.time_status === "3" ? 'Finished' : 'Upcoming'),
+              time: ev.time
             };
           });
           setLiveScores(mappedScores);
