@@ -155,7 +155,7 @@ export default function Dashboard() {
               <TrendingUp className="h-5 w-5" />
             </div>
             <div>
-              <span className="font-bold text-base tracking-tight text-white">WTT & Setka Terminal</span>
+              <span className="font-bold text-base tracking-tight text-white">WTT & Setka Terminal</span><span className="ml-2 text-[10px] text-slate-500 font-mono">v1.0.0</span>
               <span className="ml-2 text-xs font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded">BETSAPI CONNECTED</span>
             </div>
           </div>
@@ -367,7 +367,7 @@ export default function Dashboard() {
             <div className="p-3.5 border-b border-slate-800 bg-slate-900/80 flex justify-between items-center">
               <h3 className="font-bold text-white flex items-center text-sm">
                 <TrendingUp className="h-4 w-4 mr-2 text-indigo-400" />
-                Polymarket Live Odds
+                Setka Cup on Polymarket
               </h3>
               <span className="text-[10px] font-mono bg-indigo-950 text-indigo-300 border border-indigo-800/80 px-2 py-0.5 rounded">
                 BETSAPI SYNC
@@ -376,12 +376,7 @@ export default function Dashboard() {
             <div className="p-4">
               {liveScores.length > 0 ? (
                 <div className="space-y-3">
-                  {liveScores.filter(score => {
-                    if (globalFilter === "All") return true;
-                    if (globalFilter === "WTT") return score.league.toLowerCase().includes("wtt");
-                    if (globalFilter === "Setka") return !score.league.toLowerCase().includes("wtt");
-                    return true;
-                  }).map((score, i) => (
+                  {liveScores.filter(score => score.league.toLowerCase().includes("setka")).map((score, i) => (
                     <div key={i} className="border border-slate-800 p-3 rounded-lg flex justify-between items-center bg-slate-950 hover:border-slate-700 transition-colors">
                       <div>
                         <h4 className="font-semibold text-sm text-slate-100">{score.p1} vs {score.p2}</h4>
@@ -402,7 +397,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="text-center py-6 text-slate-500 text-xs">
-                  <p className="font-medium">No active Table Tennis markets matched right now.</p>
+                  <p className="font-medium">No active Setka Cup markets matched right now.</p>
                   <p className="text-[11px] text-slate-600 mt-1">Markets will automatically populate here as they appear.</p>
                 </div>
               )}

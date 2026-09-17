@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WTT & Setka Terminal (Table Tennis Board)
+**Version 1.0.0**
+
+A real-time dashboard for live table tennis tracking, trading, and streaming. Built with Next.js and Tailwind CSS.
+
+## Features
+- **YouTube Live Auto-Match**: Automatically syncs BetsAPI WTT live matches with the active WTT YouTube stream. Clicking the "WATCH" button scans the YouTube live stream title for the players and jumps the player to the live edge.
+- **BetsAPI Ticker**: Fetches real-time point-by-point table tennis scoring data, including historical set scores and live point tracking.
+- **Polymarket Integration**: Generates predictive market URLs (Setka Cup) using player names and dynamically filters out inactive or non-Setka events.
+- **Custom URL Streamer**: Allows dropping in a custom YouTube or M3U8 link for immediate playback.
+- **Match filtering**: Filter the dashboard by WTT, Setka, or All.
+
+## Environment Variables
+Create a \`.env.local\` file in the root directory:
+\`\`\`env
+BETSAPI_TOKEN=your_token_here
+\`\`\`
 
 ## Getting Started
-
-First, run the development server:
-
-```bash
+\`\`\`bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+\`\`\`
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Architecture
+- \`/api/betsapi\`: Proxies BetsAPI in-play requests.
+- \`/api/youtube\`: Proxies YouTube Data API searches for the active WTT live stream.
