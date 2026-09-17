@@ -66,15 +66,25 @@ export async function GET(request: Request) {
     fallback = 'https://polymarket.us/sports/setka-cup-moldova-men';
   }
 
-  for (const url of variations) {
+  const checkUrl = async (url: string) => {
     try {
-      const res = await fetch(url, { method: 'HEAD' });
+      // Polymarket Next.js returns 200 OK for 404s, so we MUST check the body content
+      const res = await fetch(url, { method: 'GET', headers: { 'User-Agent': 'Mozilla/5.0' } });
       if (res.ok) {
-        return NextResponse.redirect(url);
+        const text = await res.text();
+        if (!text.includes('default-not-found') && !text.includes('This page doesn’t exist')) {
+          return url;
+        }
       }
-    } catch (e) {
-      console.error('Poly redirect check error:', e);
-    }
+    } catch (e) {}
+    return null;
+  };
+
+  const results = await Promise.all(variations.map(checkUrl));
+  const validUrl = results.find(url => url !== null);
+
+  if (validUrl) {
+    return NextResponse.redirect(validUrl);
   }
 
   // Fallback
