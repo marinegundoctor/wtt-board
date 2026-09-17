@@ -45,7 +45,9 @@ export default function Dashboard() {
     axios.get('/api/betsapi?type=upcoming')
       .then(res => {
         if (res.data.results && res.data.results.length > 0) {
-          const mapped = res.data.results.slice(0, 15).map((ev: any) => {
+          const now = Math.floor(Date.now() / 1000);
+          const futureMatches = res.data.results.filter((ev: any) => parseInt(ev.time) > now - 300); // Only keep games that haven't started or started within last 5 mins
+          const mapped = futureMatches.slice(0, 15).map((ev: any) => {
              const date = new Date(parseInt(ev.time) * 1000);
              const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
              const isWtt = (ev.league?.name || "").toLowerCase().includes("wtt");
@@ -141,7 +143,7 @@ export default function Dashboard() {
     const p2code = processName(score.p2);
     const d = new Date();
     const dateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-    return `/api/poly-redirect?p1=${p1code}&p2=${p2code}&date=${dateStr}`;
+    return `/api/poly-redirect?p1=${p1code}&p2=${p2code}&date=${dateStr}&league=${encodeURIComponent(score.league)}`;
   };
 
   const handleMatchClick = (score: any) => {
