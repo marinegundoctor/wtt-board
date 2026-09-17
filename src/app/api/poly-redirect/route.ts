@@ -53,17 +53,17 @@ export async function GET(request: Request) {
   ];
 
   let variations = [...getUrls(slugB), ...getUrls(slugA)]; // Try modern format first
-  let fallback = variations[0];
+  let fallback = 'https://polymarket.us/sports/setka-cup-ukraine-men';
 
   if (league.includes('women')) {
     variations = [variations[1], variations[5], variations[0], variations[4]]; // B-women, A-women, B-men, A-men
-    fallback = variations[0];
+    fallback = 'https://polymarket.us/sports/setka-cup-ukraine-women';
   } else if (league.includes('czech')) {
     variations = [variations[2], variations[6], variations[0], variations[4], variations[3], variations[7]]; // B-czech, A-czech, ...
-    fallback = variations[0];
+    fallback = 'https://polymarket.us/sports/setka-cup-czechia-men';
   } else if (league.includes('moldova')) {
     variations = [variations[3], variations[7], variations[0], variations[4], variations[2], variations[6]];
-    fallback = variations[0];
+    fallback = 'https://polymarket.us/sports/setka-cup-moldova-men';
   }
 
   for (const url of variations) {
