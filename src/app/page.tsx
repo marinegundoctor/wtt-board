@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [youtubeStreams, setYoutubeStreams] = useState<any[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [customStreamUrl, setCustomStreamUrl] = useState<string>("");
-  const [polymarketEvents, setPolymarketEvents] = useState<any[]>([]);
+
   const [syncKey, setSyncKey] = useState<number>(0);
   const [syncStatus, setSyncStatus] = useState<"idle" | "synced">("idle");
   const [globalFilter, setGlobalFilter] = useState<"All" | "WTT" | "Setka">("All");
@@ -36,13 +36,8 @@ export default function Dashboard() {
       })
       .catch(() => console.log("YouTube API using placeholder"));
 
-    // 2. Fetch Polymarket Table Tennis Markets
-    axios.get('/api/polymarket')
-      .then(res => {
-        const events = res.data || [];
-        setPolymarketEvents(events);
-      })
-      .catch(() => console.log("Polymarket Gamma API unavailable"));
+    // 2. Polymarket events are now derived directly from liveScores 
+    // to bypass Gamma API unreliability.
   }, []);
 
   // 3. Polling BetsAPI for live scores
@@ -100,6 +95,26 @@ export default function Dashboard() {
       id: { videoId },
       snippet: { title: "Custom Stream Source" }
     });
+  };
+
+  const generatePolymarketUrl = (score: any) => {
+    if (score.league.toLowerCase().includes('wtt')) {
+      return `https://polymarket.us/markets?query=${encodeURIComponent(score.p1)}`;
+    }
+    const processName = (name: string) => {
+      const parts = name.split(' ').map(p => p.trim()).filter(p => p.length > 0);
+      if (parts.length >= 2) {
+        const last = parts[0].toLowerCase().replace(/[^a-z]/g, '').substring(0, 3);
+        const first = parts[1].toLowerCase().replace(/[^a-z]/g, '').substring(0, 3);
+        return `${last}${first}`;
+      }
+      return name.toLowerCase().replace(/[^a-z]/g, '').substring(0, 6);
+    };
+    const p1code = processName(score.p1);
+    const p2code = processName(score.p2);
+    const d = new Date();
+    const dateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+    return `https://polymarket.us/sports/setka-cup-ukraine-men/setkameua-${p1code}-${p2code}-${dateStr}`;
   };
 
   const handleMatchClick = (score: any) => {
@@ -185,12 +200,7 @@ export default function Dashboard() {
             }).map((score) => (
               <div 
                 key={score.id} 
-                onClick={() => {
-                  setCustomStreamUrl(`${score.p1} vs ${score.p2}`);
-                  handleMatchClick(score);
-                }}
-                className="flex flex-col shrink-0 text-xs bg-slate-800/60 hover:bg-slate-700/80 cursor-pointer transition-colors border border-slate-700/60 px-3 py-1.5 rounded-md h-full justify-center"
-                title="Click to auto-load stream or populate URL box"
+                className="flex flex-col shrink-0 text-xs bg-slate-800/60 hover:bg-slate-700/80 transition-colors border border-slate-700/60 px-3 py-1.5 rounded-md h-full justify-center"
               >
                 <div className="flex justify-between items-center mb-1">
                   <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded-sm ${score.league.toLowerCase().includes('wtt') ? 'bg-red-950 text-red-400 border border-red-800/50' : 'bg-blue-950 text-blue-400 border border-blue-800/50'}`}>
@@ -240,7 +250,7 @@ export default function Dashboard() {
                            handleMatchClick(score);
                            window.scrollTo({ top: 0, behavior: 'smooth' });
                          } else {
-                           window.open('https://polymarket.us', '_blank');
+                           window.open(generatePolymarketUrl(score), '_blank');
                          }
                       }}
                       className="mt-1 bg-slate-700/80 hover:bg-slate-600 px-2 py-0.5 rounded text-[8px] font-bold text-white flex items-center transition-colors"
@@ -357,25 +367,27 @@ export default function Dashboard() {
                 Polymarket Live Odds
               </h3>
               <span className="text-[10px] font-mono bg-indigo-950 text-indigo-300 border border-indigo-800/80 px-2 py-0.5 rounded">
-                GAMMA API
+                BETSAPI SYNC
               </span>
             </div>
             <div className="p-4">
-              {polymarketEvents.length > 0 ? (
+              {liveScores.length > 0 ? (
                 <div className="space-y-3">
-                  {polymarketEvents.filter(ev => {
+                  {liveScores.filter(score => {
                     if (globalFilter === "All") return true;
-                    if (globalFilter === "WTT") return ev.title?.toLowerCase().includes("wtt") || ev.description?.toLowerCase().includes("wtt");
-                    if (globalFilter === "Setka") return !ev.title?.toLowerCase().includes("wtt") && !ev.description?.toLowerCase().includes("wtt");
+                    if (globalFilter === "WTT") return score.league.toLowerCase().includes("wtt");
+                    if (globalFilter === "Setka") return !score.league.toLowerCase().includes("wtt");
                     return true;
-                  }).map((ev, i) => (
+                  }).map((score, i) => (
                     <div key={i} className="border border-slate-800 p-3 rounded-lg flex justify-between items-center bg-slate-950 hover:border-slate-700 transition-colors">
                       <div>
-                        <h4 className="font-semibold text-sm text-slate-100">{ev.title}</h4>
-                        <p className="text-xs text-slate-400 mt-0.5 font-mono">Volume: ${Number(ev.volume || 0).toLocaleString()}</p>
+                        <h4 className="font-semibold text-sm text-slate-100">{score.p1} vs {score.p2}</h4>
+                        <p className="text-xs text-slate-400 mt-0.5 font-mono">
+                          {score.league} <span className="mx-1">&bull;</span> {score.status === 'Live' ? 'In Play' : score.status}
+                        </p>
                       </div>
                       <a
-                        href={`https://polymarket.us/event/${ev.slug}`}
+                        href={generatePolymarketUrl(score)}
                         target="_blank"
                         rel="noreferrer"
                         className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded flex items-center"
@@ -387,7 +399,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="text-center py-6 text-slate-500 text-xs">
-                  <p className="font-medium">No active Table Tennis markets listed on Polymarket right now.</p>
+                  <p className="font-medium">No active Table Tennis markets matched right now.</p>
                   <p className="text-[11px] text-slate-600 mt-1">Markets will automatically populate here as they appear.</p>
                 </div>
               )}
