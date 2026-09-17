@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [customStreamUrl, setCustomStreamUrl] = useState<string>("");
   const [polymarketEvents, setPolymarketEvents] = useState<any[]>([]);
+  const [syncKey, setSyncKey] = useState<number>(0);
 
   // 1. Fetch YouTube Live Streams
   useEffect(() => {
@@ -160,9 +161,10 @@ export default function Dashboard() {
             <div className="bg-black aspect-video relative flex items-center justify-center">
               {selectedVideo?.id?.videoId ? (
                 <iframe
+                  key={syncKey}
                   width="100%"
                   height="100%"
-                  src={`https://www.youtube.com/embed/${selectedVideo.id.videoId}?autoplay=1`}
+                  src={`https://www.youtube.com/embed/${selectedVideo.id.videoId}?autoplay=1&mute=1`}
                   title={selectedVideo.snippet?.title || "Live Stream"}
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -220,6 +222,14 @@ export default function Dashboard() {
                   className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg shrink-0 border border-slate-700 transition-colors"
                 >
                   Load Stream
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSyncKey(prev => prev + 1)}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-xs font-bold px-3 py-2 rounded-lg shrink-0 transition-colors flex items-center"
+                  title="Force player to jump to the absolute live edge"
+                >
+                  <Activity className="h-3 w-3 mr-1 animate-pulse" /> Sync Live
                 </button>
               </form>
             </div>
