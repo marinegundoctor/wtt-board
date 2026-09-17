@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [customStreamUrl, setCustomStreamUrl] = useState<string>("");
   const [polymarketEvents, setPolymarketEvents] = useState<any[]>([]);
   const [syncKey, setSyncKey] = useState<number>(0);
+  const [syncStatus, setSyncStatus] = useState<"idle" | "synced">("idle");
 
   // 1. Fetch YouTube Live Streams
   useEffect(() => {
@@ -96,6 +97,14 @@ export default function Dashboard() {
       id: { videoId },
       snippet: { title: "Custom Stream Source" }
     });
+  };
+
+  const handleSyncLive = () => {
+    setSyncKey(prev => prev + 1);
+    setSyncStatus("synced");
+    setTimeout(() => {
+      setSyncStatus("idle");
+    }, 3000);
   };
 
   return (
@@ -225,13 +234,26 @@ export default function Dashboard() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSyncKey(prev => prev + 1)}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-xs font-bold px-3 py-2 rounded-lg shrink-0 transition-colors flex items-center"
+                  onClick={handleSyncLive}
+                  className={`text-xs font-bold px-3 py-2 rounded-lg shrink-0 transition-colors flex items-center ${
+                    syncStatus === "synced" 
+                      ? "bg-emerald-600 text-slate-950 border border-emerald-500" 
+                      : "bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600"
+                  }`}
                   title="Force player to jump to the absolute live edge"
                 >
-                  <Activity className="h-3 w-3 mr-1 animate-pulse" /> Sync Live
+                  <Activity className={`h-3 w-3 mr-1 ${syncStatus === "synced" ? "animate-pulse" : ""}`} /> 
+                  {syncStatus === "synced" ? "Live Feed Synced" : "Resync Live"}
                 </button>
               </form>
+              
+              {/* YouTube Live Indicator Explanation */}
+              <div className="text-[10px] text-slate-500 mt-2 flex items-center bg-slate-950/50 p-2 rounded border border-slate-800/50">
+                <span className="h-2 w-2 rounded-full bg-red-600 mr-2 flex-shrink-0 animate-pulse"></span>
+                <p>
+                  <strong>YouTube Tip:</strong> If you pause the video, you will fall behind real-time play. You can also click the red <strong>"Live"</strong> text inside the YouTube player controls to instantly snap back to the live edge.
+                </p>
+              </div>
             </div>
           </section>
 
