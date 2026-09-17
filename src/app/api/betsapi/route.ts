@@ -7,11 +7,15 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
+    const type = searchParams.get('type') || 'inplay';
 
-    const response = await axios.get('https://api.b365api.com/v2/events/inplay', {
+    const endpoint = type === 'upcoming' ? 'https://api.b365api.com/v2/events/upcoming' : 'https://api.b365api.com/v2/events/inplay';
+
+    const response = await axios.get(endpoint, {
       params: {
         sport_id: 92,
-        token: BETSAPI_TOKEN
+        token: BETSAPI_TOKEN,
+        ...(type === 'upcoming' && date ? { day: date } : {})
       }
     });
 

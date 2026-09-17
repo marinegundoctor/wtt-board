@@ -41,6 +41,28 @@ export default function Dashboard() {
   }, []);
 
   // 3. Polling BetsAPI for live scores
+  const fetchUpcoming = () => {
+    axios.get('/api/betsapi?type=upcoming')
+      .then(res => {
+        if (res.data.results && res.data.results.length > 0) {
+          const mapped = res.data.results.slice(0, 15).map((ev: any) => {
+             const date = new Date(parseInt(ev.time) * 1000);
+             const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+             const isWtt = (ev.league?.name || "").toLowerCase().includes("wtt");
+             return {
+                time: timeStr,
+                table: "Scheduled",
+                players: `${ev.home?.name || 'TBA'} vs ${ev.away?.name || 'TBA'}`,
+                category: ev.league?.name || "Table Tennis",
+                league: isWtt ? "WTT" : "Setka"
+             };
+          });
+          setMatchSchedule(mapped);
+        }
+      })
+      .catch(() => console.log("Failed to fetch upcoming matches"));
+  };
+
   const fetchBets = () => {
     axios.get('/api/betsapi')
       .then(res => {
@@ -70,6 +92,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchBets();
+    fetchUpcoming();
     const interval = setInterval(fetchBets, 15000);
     return () => clearInterval(interval);
   }, []);
@@ -382,6 +405,7 @@ export default function Dashboard() {
                         <h4 className="font-semibold text-sm text-slate-100">{score.p1} vs {score.p2}</h4>
                         <p className="text-xs text-slate-400 mt-0.5 font-mono">
                           {score.league} <span className="mx-1">&bull;</span> {score.status === 'Live' ? 'In Play' : score.status}
+                          {score.time && <span className="ml-1 text-slate-500">({new Date(parseInt(score.time) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>}
                         </p>
                       </div>
                       <a
