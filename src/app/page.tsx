@@ -134,7 +134,7 @@ export default function Dashboard() {
 
   const generatePolymarketUrl = (score: any) => {
     if (score.league.toLowerCase().includes('wtt')) {
-      return "https://polymarket.us";
+      return "https://polymarket.us/sports/wtt";
     }
     const d = new Date();
     const dateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;

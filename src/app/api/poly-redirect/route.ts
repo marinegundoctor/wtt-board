@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     }
     const p1Parts = parseParts(name1);
     const p2Parts = parseParts(name2);
-    return `${p1Parts.last}${p2Parts.last}-${p1Parts.first}${p2Parts.first}`;
+    return `${p1Parts.last}${p1Parts.first}-${p2Parts.last}${p2Parts.first}`;
   };
 
   const slugA = getFormatA(p1, p2);
