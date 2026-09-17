@@ -154,21 +154,46 @@ export default function Dashboard() {
   };
 
   const handleMatchClick = (score: any) => {
-    // Attempt to match names
-    const p1LastName = score.p1.split(' ').pop()?.toLowerCase() || "";
-    const p2LastName = score.p2.split(' ').pop()?.toLowerCase() || "";
-    const p1Full = score.p1.toLowerCase();
-    const p2Full = score.p2.toLowerCase();
-    
-    const matchedStream = youtubeStreams.find(s => {
+    if (youtubeStreams.length === 0) {
+      alert("No active WTT YouTube streams available right now.");
+      return;
+    }
+
+    // WTT streams don't contain player names, they contain tournament names and tables (e.g. "T1", "T2")
+    // Example League: "WTT Star Contender Astana MD"
+    // Example Stream: "LIVE! | T4 | Day 1 | WTT Star Contender Astana 2026"
+    const leagueKeywords = score.league.toLowerCase().split(' ').filter((w: string) => 
+      !['wtt', 'md', 'wd', 'xd', 'ms', 'ws', 'men', 'women', 'singles', 'doubles', 'qualifying'].includes(w)
+    );
+
+    let bestMatch: any = null;
+    let highestScore = 0;
+
+    youtubeStreams.forEach((s: any) => {
       const title = (s.snippet?.title || "").toLowerCase();
-      return title.includes(p1LastName) || title.includes(p2LastName) || title.includes(p1Full) || title.includes(p2Full);
+      let matchScore = 0;
+      leagueKeywords.forEach((kw: string) => {
+        if (title.includes(kw)) matchScore++;
+      });
+
+      if (matchScore > highestScore) {
+        highestScore = matchScore;
+        bestMatch = s;
+      } else if (matchScore === highestScore && highestScore > 0) {
+        // Tie-breaker: prefer Table 1 if scores are equal
+        const currentIsT1 = title.includes('| t1 |') || title.includes('table 1');
+        const bestIsT1 = (bestMatch?.snippet?.title || "").toLowerCase().includes('| t1 |') || (bestMatch?.snippet?.title || "").toLowerCase().includes('table 1');
+        if (currentIsT1 && !bestIsT1) {
+           bestMatch = s;
+        }
+      }
     });
-    
-    if (matchedStream) {
-      setSelectedVideo(matchedStream);
+
+    if (bestMatch && highestScore > 0) {
+      setSelectedVideo(bestMatch);
     } else {
-      alert(`Could not find a dedicated WTT stream for ${score.p1} vs ${score.p2}.`);
+      // Fallback: just load the very first WTT stream if we can't find a tournament match
+      setSelectedVideo(youtubeStreams[0]);
     }
   };
 
