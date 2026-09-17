@@ -49,7 +49,7 @@ export default function Dashboard() {
           const futureMatches = res.data.results.filter((ev: any) => parseInt(ev.time) > now - 300); // Only keep games that haven't started or started within last 5 mins
           const mapped = futureMatches.slice(0, 15).map((ev: any) => {
              const date = new Date(parseInt(ev.time) * 1000);
-             const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+             const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
              const isWtt = (ev.league?.name || "").toLowerCase().includes("wtt");
              return {
                 time: timeStr,
@@ -136,21 +136,9 @@ export default function Dashboard() {
     if (score.league.toLowerCase().includes('wtt')) {
       return "https://polymarket.us";
     }
-    const processName = (name: string) => {
-      const parts = name.split(' ').map(p => p.trim()).filter(p => p.length > 0);
-      if (parts.length >= 2) {
-        // Polymarket slug uses first 3 letters of LAST name, then first 3 of FIRST name.
-        const last = parts[parts.length - 1].toLowerCase().replace(/[^a-z]/g, '').substring(0, 3);
-        const first = parts[0].toLowerCase().replace(/[^a-z]/g, '').substring(0, 3);
-        return `${last}${first}`;
-      }
-      return name.toLowerCase().replace(/[^a-z]/g, '').substring(0, 6);
-    };
-    const p1code = processName(score.p1);
-    const p2code = processName(score.p2);
     const d = new Date();
     const dateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-    return `/api/poly-redirect?p1=${p1code}&p2=${p2code}&date=${dateStr}&league=${encodeURIComponent(score.league)}`;
+    return `/api/poly-redirect?p1=${encodeURIComponent(score.p1)}&p2=${encodeURIComponent(score.p2)}&date=${dateStr}&league=${encodeURIComponent(score.league)}`;
   };
 
   const handleMatchClick = (score: any) => {
@@ -442,7 +430,7 @@ export default function Dashboard() {
                         <h4 className="font-semibold text-sm text-slate-100">{score.p1} vs {score.p2}</h4>
                         <p className="text-xs text-slate-400 mt-0.5 font-mono">
                           {score.league} <span className="mx-1">&bull;</span> {score.status === 'Live' ? 'In Play' : score.status}
-                          {score.time && <span className="ml-1 text-slate-500">({new Date(parseInt(score.time) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>}
+                          {score.time && <span className="ml-1 text-slate-500">({new Date(parseInt(score.time) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })})</span>}
                         </p>
                       </div>
                       <a
