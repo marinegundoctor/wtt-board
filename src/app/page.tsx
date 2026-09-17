@@ -7,9 +7,11 @@ import axios from "axios";
 export default function Dashboard() {
   const [liveScores, setLiveScores] = useState<any[]>([]);
   const [matchSchedule, setMatchSchedule] = useState<any[]>([
-    { time: "10:00", table: "Table 1", players: "S. Yingsha vs M. Ito", category: "WS - R16" },
-    { time: "10:45", table: "Table 2", players: "M. Long vs L. Yun-Ju", category: "MS - R16" },
-    { time: "11:30", table: "Table 1", players: "Chen/Wang vs Shin/Jeon", category: "WD - QF" },
+    { time: "10:00", table: "Table 1", players: "S. Yingsha vs M. Ito", category: "WS - R16", league: "WTT" },
+    { time: "10:45", table: "Table 2", players: "M. Long vs L. Yun-Ju", category: "MS - R16", league: "WTT" },
+    { time: "11:00", table: "Setka", players: "O. Melashenko vs H. Kulishov", category: "Men Singles", league: "Setka" },
+    { time: "11:30", table: "Table 1", players: "Chen/Wang vs Shin/Jeon", category: "WD - QF", league: "WTT" },
+    { time: "12:00", table: "Setka", players: "I. Szymanski vs P. Kurek", category: "Men Singles", league: "Setka" },
   ]);
   const [youtubeStreams, setYoutubeStreams] = useState<any[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
@@ -60,6 +62,7 @@ export default function Dashboard() {
               p2: ev.away?.name || "Player 2",
               s1: setScores[0] || '0',
               s2: setScores[1] || '0',
+              sets: scoresObj,
               current: lastSet ? `Pts: ${lastSet.home ?? 0}-${lastSet.away ?? 0}` : (ev.league?.name || ''),
               status: ev.time_status === "1" ? 'Live' : (ev.time_status === "3" ? 'Finished' : 'Upcoming')
             };
@@ -159,7 +162,7 @@ export default function Dashboard() {
       </header>
 
       {/* BetsAPI Live Score Ticker */}
-      <div className="bg-slate-900/90 border-b border-slate-800">
+      <div className="bg-slate-900/90 border-b border-slate-800 sticky top-14 z-40">
         <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-stretch space-x-2 h-20">
           <div className="flex items-center space-x-2 text-emerald-400 font-mono font-bold shrink-0 text-xs pr-4">
             <Activity className="h-4 w-4 animate-pulse" />
@@ -194,22 +197,56 @@ export default function Dashboard() {
                     {score.league.toLowerCase().includes('wtt') ? 'WTT' : 'SETKA'}
                   </span>
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-3 mt-1">
                   <div className="flex flex-col max-w-[130px]">
                     <span className="font-semibold text-white truncate">{score.p1}</span>
                     <span className="text-slate-400 truncate">{score.p2}</span>
                   </div>
-                  <div className="flex flex-col items-center justify-center font-mono font-bold text-sm px-2 text-emerald-400">
-                    <span>{score.s1}</span>
-                    <span>{score.s2}</span>
+                  
+                  {/* Scores Area */}
+                  <div className="flex items-center space-x-2 font-mono">
+                    {/* Previous Sets */}
+                    {score.sets && score.sets.slice(0, score.status === 'Live' ? -1 : undefined).map((s: any, idx: number) => {
+                      const h = parseInt(s.home||'0'), a = parseInt(s.away||'0');
+                      return (
+                        <div key={idx} className="flex flex-col items-center text-slate-300 text-[11px]">
+                          <span className={h > a ? 'font-bold underline' : ''}>{h}</span>
+                          <span className={a > h ? 'font-bold underline' : ''}>{a}</span>
+                        </div>
+                      )
+                    })}
+                    
+                    {/* Current Set / Live Score */}
+                    {score.status === 'Live' && score.sets && score.sets.length > 0 && (() => {
+                      const last = score.sets[score.sets.length - 1];
+                      const h = parseInt(last.home||'0'), a = parseInt(last.away||'0');
+                      return (
+                        <div className="flex flex-col items-center text-sm ml-1">
+                          <span className={`font-bold ${h > a ? 'text-emerald-400' : h < a ? 'text-red-400' : 'text-emerald-400'}`}>{h}</span>
+                          <span className={`font-bold ${a > h ? 'text-emerald-400' : a < h ? 'text-red-400' : 'text-emerald-400'}`}>{a}</span>
+                        </div>
+                      )
+                    })()}
                   </div>
-                  <div className="flex flex-col font-mono text-[11px] text-slate-400 min-w-[70px]">
-                    <span className={score.status === "Live" ? "text-emerald-400 font-bold" : "text-slate-500"}>
-                      {score.status}
+
+                  <div className="flex flex-col items-end min-w-[50px]">
+                    <span className={`text-[10px] uppercase font-bold ${score.status === "Live" ? "text-emerald-400" : "text-slate-500"}`}>
+                      {score.status === "Live" ? "LIVE" : (score.status === "Finished" ? "FINISHED" : "PENDING")}
                     </span>
-                    <span className="text-[10px] text-slate-500">
-                      {score.current?.includes('-') ? score.current : ''}
-                    </span>
+                    <button 
+                      onClick={(e) => {
+                         e.stopPropagation();
+                         if (score.league.toLowerCase().includes('wtt')) {
+                           handleMatchClick(score);
+                           window.scrollTo({ top: 0, behavior: 'smooth' });
+                         } else {
+                           window.open('https://polymarket.us', '_blank');
+                         }
+                      }}
+                      className="mt-1 bg-slate-700/80 hover:bg-slate-600 px-2 py-0.5 rounded text-[8px] font-bold text-white flex items-center transition-colors"
+                    >
+                       {score.league.toLowerCase().includes('wtt') ? 'WATCH' : 'WATCH ON POLY'}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -285,21 +322,8 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* Custom stream URL input */}
-              <form onSubmit={handleCustomStream} className="flex gap-2">
-                <input
-                  type="text"
-                  value={customStreamUrl}
-                  onChange={(e) => setCustomStreamUrl(e.target.value)}
-                  placeholder="Load a custom game stream URL (YouTube ID / M3U8)..."
-                  className="text-xs px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg w-full text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                />
-                <button
-                  type="submit"
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-3 py-2 rounded-lg shrink-0 border border-slate-700 transition-colors"
-                >
-                  Load URL
-                </button>
+              {/* Sync Live Button Only (Input moved to sidebar) */}
+              <div className="flex justify-end mt-2">
                 <button
                   type="button"
                   onClick={handleSyncLive}
@@ -313,7 +337,7 @@ export default function Dashboard() {
                   <Activity className={`h-3 w-3 mr-1 ${syncStatus === "synced" ? "animate-pulse" : ""}`} /> 
                   {syncStatus === "synced" ? "Live Feed Synced" : "Resync Live"}
                 </button>
-              </form>
+              </div>
               
               {/* YouTube Live Indicator Explanation */}
               <div className="text-[10px] text-slate-500 mt-2 flex items-center bg-slate-950/50 p-2 rounded border border-slate-800/50">
@@ -351,7 +375,7 @@ export default function Dashboard() {
                         <p className="text-xs text-slate-400 mt-0.5 font-mono">Volume: ${Number(ev.volume || 0).toLocaleString()}</p>
                       </div>
                       <a
-                        href={`https://polymarket.com/event/${ev.slug}`}
+                        href={`https://polymarket.us/event/${ev.slug}`}
                         target="_blank"
                         rel="noreferrer"
                         className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded flex items-center"
@@ -374,6 +398,29 @@ export default function Dashboard() {
         {/* Sidebar */}
         <div className="space-y-6">
           
+          {/* Custom Stream Source Input */}
+          <section className="bg-slate-900 rounded-xl border border-slate-800 p-4 shadow-md">
+            <h3 className="font-bold text-sm text-slate-100 flex items-center mb-2">
+              <Tv className="h-4 w-4 mr-1 text-emerald-400" />
+              Custom Stream Source
+            </h3>
+            <form onSubmit={handleCustomStream} className="flex gap-2">
+              <input
+                type="text"
+                value={customStreamUrl}
+                onChange={(e) => setCustomStreamUrl(e.target.value)}
+                placeholder="YouTube ID / M3U8 URL..."
+                className="text-xs px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg w-full text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+              />
+              <button
+                type="submit"
+                className="bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-xs font-bold px-3 py-2 rounded-lg shrink-0 transition-colors"
+              >
+                Load
+              </button>
+            </form>
+          </section>
+
           {/* Trade Alerts */}
           <section className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl border border-slate-800 p-5 text-white shadow-md">
             <div className="flex items-start space-x-3 mb-3">
@@ -404,7 +451,12 @@ export default function Dashboard() {
               <h2 className="font-bold text-sm text-white">Upcoming Matches</h2>
             </div>
             <div className="divide-y divide-slate-800/60">
-              {matchSchedule.map((match, idx) => (
+                  {matchSchedule.filter(m => {
+                    if (globalFilter === "All") return true;
+                    if (globalFilter === "WTT") return m.league === "WTT";
+                    if (globalFilter === "Setka") return m.league === "Setka";
+                    return true;
+                  }).map((match, idx) => (
                 <div key={idx} className="p-3 hover:bg-slate-800/40 transition-colors flex items-center justify-between text-xs">
                   <div className="flex items-center space-x-3">
                     <div className="text-center font-mono">
