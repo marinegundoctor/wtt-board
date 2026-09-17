@@ -95,11 +95,17 @@ export default function Dashboard() {
   useEffect(() => {
     fetchBets();
     fetchUpcoming();
-    const interval = setInterval(() => {
-      fetchBets();
-      fetchUpcoming();
-    }, 30000);
-    return () => clearInterval(interval);
+    
+    // Live scores every 15 seconds
+    const liveInterval = setInterval(fetchBets, 15000);
+    
+    // Upcoming schedule every 5 minutes
+    const upcomingInterval = setInterval(fetchUpcoming, 300000);
+    
+    return () => {
+      clearInterval(liveInterval);
+      clearInterval(upcomingInterval);
+    };
   }, []);
 
   const handleCustomStream = (e: React.FormEvent) => {
