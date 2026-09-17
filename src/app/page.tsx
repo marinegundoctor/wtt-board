@@ -99,7 +99,7 @@ export default function Dashboard() {
 
   const generatePolymarketUrl = (score: any) => {
     if (score.league.toLowerCase().includes('wtt')) {
-      return `https://polymarket.us/markets?query=${encodeURIComponent(score.p1)}`;
+      return "https://polymarket.us";
     }
     const processName = (name: string) => {
       const parts = name.split(' ').map(p => p.trim()).filter(p => p.length > 0);
@@ -132,6 +132,8 @@ export default function Dashboard() {
     
     if (matchedStream) {
       setSelectedVideo(matchedStream);
+    } else {
+      alert(`Could not find a dedicated WTT stream for ${score.p1} vs ${score.p2}.`);
     }
   };
 
@@ -189,7 +191,7 @@ export default function Dashboard() {
             &lt;
           </button>
 
-          <div id="ticker-scroll" className="flex items-center overflow-x-auto no-scrollbar space-x-4 flex-1 scroll-smooth">
+          <div id="ticker-scroll" className="flex items-center overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-x-4 flex-1 scroll-smooth">
             {liveScores.length === 0 && (
               <span className="text-xs text-slate-500 italic px-4">No in-play table tennis matches at this second...</span>
             )}
