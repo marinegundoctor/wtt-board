@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [polymarketEvents, setPolymarketEvents] = useState<any[]>([]);
   const [syncKey, setSyncKey] = useState<number>(0);
   const [syncStatus, setSyncStatus] = useState<"idle" | "synced">("idle");
+  const [globalFilter, setGlobalFilter] = useState<"All" | "WTT" | "Setka">("All");
 
   // 1. Fetch YouTube Live Streams
   useEffect(() => {
@@ -34,16 +35,10 @@ export default function Dashboard() {
       .catch(() => console.log("YouTube API using placeholder"));
 
     // 2. Fetch Polymarket Table Tennis Markets
-    axios.get('https://gamma-api.polymarket.com/events?closed=false')
+    axios.get('https://gamma-api.polymarket.com/events?closed=false&tag_slug=table-tennis')
       .then(res => {
         const events = res.data || [];
-        const ttEvents = events.filter((e: any) => 
-          e.title?.toLowerCase().includes('table tennis') || 
-          e.title?.toLowerCase().includes('wtt') ||
-          e.title?.toLowerCase().includes('setka') ||
-          (e.description && e.description.toLowerCase().includes('table tennis'))
-        );
-        setPolymarketEvents(ttEvents);
+        setPolymarketEvents(events);
       })
       .catch(() => console.log("Polymarket Gamma API unavailable"));
   }, []);
@@ -121,9 +116,22 @@ export default function Dashboard() {
               <span className="ml-2 text-xs font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded">BETSAPI CONNECTED</span>
             </div>
           </div>
-          <div className="flex items-center space-x-4 text-xs font-mono text-slate-400">
-            <span>POLL: 15s</span>
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <div className="flex items-center space-x-6">
+            <div className="flex bg-slate-800 rounded-lg p-1 space-x-1">
+              {(["All", "WTT", "Setka"] as const).map(f => (
+                <button 
+                  key={f} 
+                  onClick={() => setGlobalFilter(f)} 
+                  className={`px-3 py-1 text-[10px] uppercase font-bold rounded-md transition-colors ${globalFilter === f ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-slate-200"}`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center space-x-2 text-xs font-mono text-slate-400">
+              <span>API Polling</span>
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+            </div>
           </div>
         </div>
       </header>
@@ -135,27 +143,46 @@ export default function Dashboard() {
             <Activity className="h-4 w-4 animate-pulse" />
             <span>LIVE MATCHES ({liveScores.length})</span>
           </div>
+          <div className="text-slate-600 font-bold">&lt;</div>
           {liveScores.length === 0 && (
             <span className="text-xs text-slate-500 italic">No in-play table tennis matches at this second...</span>
           )}
-          {liveScores.map((score) => (
-            <div key={score.id} className="flex items-center space-x-3 shrink-0 text-xs bg-slate-800/60 border border-slate-700/60 px-3 py-1.5 rounded-md">
-              <div className="flex flex-col max-w-[130px]">
-                <span className="font-semibold text-white truncate">{score.p1}</span>
-                <span className="text-slate-400 truncate">{score.p2}</span>
-              </div>
-              <div className="flex flex-col items-center justify-center font-mono font-bold text-sm px-2 text-emerald-400">
-                <span>{score.s1}</span>
-                <span>{score.s2}</span>
-              </div>
-              <div className="flex flex-col font-mono text-[11px] text-slate-400 min-w-[70px]">
-                <span className={score.status === "Live" ? "text-emerald-400 font-bold" : "text-slate-500"}>
-                  {score.status}
+          {liveScores.filter(score => {
+             if (globalFilter === "All") return true;
+             if (globalFilter === "WTT") return score.league.toLowerCase().includes("wtt");
+             if (globalFilter === "Setka") return !score.league.toLowerCase().includes("wtt");
+             return true;
+          }).map((score) => (
+            <div 
+              key={score.id} 
+              onClick={() => setCustomStreamUrl(`${score.p1} vs ${score.p2}`)}
+              className="flex flex-col shrink-0 text-xs bg-slate-800/60 hover:bg-slate-700/80 cursor-pointer transition-colors border border-slate-700/60 px-3 py-1.5 rounded-md"
+              title="Click to load names into stream player input"
+            >
+              <div className="flex justify-between items-center mb-1">
+                <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded-sm ${score.league.toLowerCase().includes('wtt') ? 'bg-red-950 text-red-400 border border-red-800/50' : 'bg-blue-950 text-blue-400 border border-blue-800/50'}`}>
+                  {score.league.toLowerCase().includes('wtt') ? 'WTT' : 'SETKA'}
                 </span>
-                <span className="text-[10px] text-slate-500">{score.current}</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="flex flex-col max-w-[130px]">
+                  <span className="font-semibold text-white truncate">{score.p1}</span>
+                  <span className="text-slate-400 truncate">{score.p2}</span>
+                </div>
+                <div className="flex flex-col items-center justify-center font-mono font-bold text-sm px-2 text-emerald-400">
+                  <span>{score.s1}</span>
+                  <span>{score.s2}</span>
+                </div>
+                <div className="flex flex-col font-mono text-[11px] text-slate-400 min-w-[70px]">
+                  <span className={score.status === "Live" ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                    {score.status}
+                  </span>
+                  <span className="text-[10px] text-slate-500">{score.current}</span>
+                </div>
               </div>
             </div>
           ))}
+          <div className="text-slate-600 font-bold">&gt;</div>
         </div>
       </div>
 
@@ -196,7 +223,12 @@ export default function Dashboard() {
                     <Tv className="h-3.5 w-3.5 mr-1 text-emerald-400" /> Live Tables Available:
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {youtubeStreams.map((stream, idx) => {
+                    {youtubeStreams.filter(stream => {
+                      if (globalFilter === "All") return true;
+                      if (globalFilter === "Setka") return false; // We only pull WTT streams currently
+                      if (globalFilter === "WTT") return true;
+                      return true;
+                    }).map((stream, idx) => {
                       const isSelected = selectedVideo?.id?.videoId === stream.id?.videoId;
                       const title = stream.snippet?.title || `Feed #${idx + 1}`;
                       return (
@@ -271,7 +303,12 @@ export default function Dashboard() {
             <div className="p-4">
               {polymarketEvents.length > 0 ? (
                 <div className="space-y-3">
-                  {polymarketEvents.map((ev, i) => (
+                  {polymarketEvents.filter(ev => {
+                    if (globalFilter === "All") return true;
+                    if (globalFilter === "WTT") return ev.title?.toLowerCase().includes("wtt") || ev.description?.toLowerCase().includes("wtt");
+                    if (globalFilter === "Setka") return !ev.title?.toLowerCase().includes("wtt") && !ev.description?.toLowerCase().includes("wtt");
+                    return true;
+                  }).map((ev, i) => (
                     <div key={i} className="border border-slate-800 p-3 rounded-lg flex justify-between items-center bg-slate-950 hover:border-slate-700 transition-colors">
                       <div>
                         <h4 className="font-semibold text-sm text-slate-100">{ev.title}</h4>
