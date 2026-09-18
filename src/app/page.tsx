@@ -46,7 +46,9 @@ export default function Dashboard() {
       .then(res => {
         if (res.data.results && res.data.results.length > 0) {
           const now = Math.floor(Date.now() / 1000);
-          const futureMatches = res.data.results.filter((ev: any) => parseInt(ev.time) > now - 300); // Only keep games that haven't started or started within last 5 mins
+          const futureMatches = res.data.results
+            .filter((ev: any) => parseInt(ev.time) > now - 300)
+            .filter((ev: any) => (ev.league?.name || "").toLowerCase().includes('wtt') || (ev.league?.name || "").toLowerCase().includes('setka'));
           const mapped = futureMatches.slice(0, 15).map((ev: any) => {
              const date = new Date(parseInt(ev.time) * 1000);
              const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -418,7 +420,7 @@ export default function Dashboard() {
             <div className="p-3.5 border-b border-slate-800 bg-slate-900/80 flex justify-between items-center">
               <h3 className="font-bold text-white flex items-center text-sm">
                 <TrendingUp className="h-4 w-4 mr-2 text-indigo-400" />
-                Setka Cup on Polymarket
+                Table Tennis on Polymarket
               </h3>
               <span className="text-[10px] font-mono bg-indigo-950 text-indigo-300 border border-indigo-800/80 px-2 py-0.5 rounded">
                 BETSAPI SYNC
@@ -427,7 +429,7 @@ export default function Dashboard() {
             <div className="p-4">
               {liveScores.length > 0 ? (
                 <div className="space-y-3">
-                  {liveScores.filter(score => score.league.toLowerCase().includes("setka")).map((score, i) => (
+                  {liveScores.map((score, i) => (
                     <div key={i} className="border border-slate-800 p-3 rounded-lg flex justify-between items-center bg-slate-950 hover:border-slate-700 transition-colors">
                       <div>
                         <h4 className="font-semibold text-sm text-slate-100">{score.p1} vs {score.p2}</h4>
@@ -449,7 +451,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="text-center py-6 text-slate-500 text-xs">
-                  <p className="font-medium">No active Setka Cup markets matched right now.</p>
+                  <p className="font-medium">No active Table Tennis markets matched right now.</p>
                   <p className="text-[11px] text-slate-600 mt-1">Markets will automatically populate here as they appear.</p>
                 </div>
               )}
