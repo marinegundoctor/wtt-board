@@ -72,7 +72,7 @@ export async function GET(request: Request) {
       const res = await fetch(url, { method: 'GET', headers: { 'User-Agent': 'Mozilla/5.0' } });
       if (res.ok) {
         const text = await res.text();
-        if (!text.includes('default-not-found') && !text.includes('This page doesn’t exist')) {
+        if (!text.includes('data-slot="default-not-found"')) {
           return url;
         }
       }
