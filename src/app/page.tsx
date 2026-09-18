@@ -255,7 +255,7 @@ export default function Dashboard() {
               >
                 <div className="flex justify-between items-center mb-1">
                   <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded-sm ${score.league.toLowerCase().includes('wtt') ? 'bg-red-950 text-red-400 border border-red-800/50' : 'bg-blue-950 text-blue-400 border border-blue-800/50'}`}>
-                    {score.league.toLowerCase().includes('wtt') ? 'WTT' : 'SETKA'}
+                    {score.league.toLowerCase().includes('wtt') ? 'WTT' : (score.league.toLowerCase().includes('setka') ? 'SETKA' : score.league)}
                   </span>
                 </div>
                 <div className="flex items-center space-x-3 mt-1">
