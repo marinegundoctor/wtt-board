@@ -50,14 +50,14 @@ export default function Dashboard() {
           const mapped = futureMatches.slice(0, 15).map((ev: any) => {
              const date = new Date(parseInt(ev.time) * 1000);
              const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-             const isWtt = (ev.league?.name || "").toLowerCase().includes("wtt");
-             return {
-                time: timeStr,
-                table: "Scheduled",
-                players: `${ev.home?.name || 'TBA'} vs ${ev.away?.name || 'TBA'}`,
-                category: ev.league?.name || "Table Tennis",
-                league: isWtt ? "WTT" : "Setka"
-             };
+            return {
+              time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+              table: 'Scheduled',
+              players: `${ev.home?.name || 'TBA'} vs ${ev.away?.name || 'TBA'}`,
+              category: ev.league?.name || 'Table Tennis',
+              league: ev.league?.name?.toLowerCase().includes('wtt') ? 'WTT' : (ev.league?.name?.toLowerCase().includes('setka') ? 'Setka' : ev.league?.name),
+              id: ev.id
+            };
           });
           setMatchSchedule(mapped);
         }
@@ -87,7 +87,10 @@ export default function Dashboard() {
               time: ev.time
             };
           });
-          setLiveScores(mappedScores);
+          const validScores = mappedScores.filter((score: any) => 
+            score.league.toLowerCase().includes('wtt') || score.league.toLowerCase().includes('setka')
+          );
+          setLiveScores(validScores);
         }
       })
       .catch(() => console.log("BetsAPI fetch failed"));
@@ -246,7 +249,7 @@ export default function Dashboard() {
             {liveScores.filter(score => {
                if (globalFilter === "All") return true;
                if (globalFilter === "WTT") return score.league.toLowerCase().includes("wtt");
-               if (globalFilter === "Setka") return !score.league.toLowerCase().includes("wtt");
+               if (globalFilter === "Setka") return score.league.toLowerCase().includes("setka");
                return true;
             }).map((score) => (
               <div 
